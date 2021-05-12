@@ -1,0 +1,10 @@
+version: '3'
+services:
+  console:
+    image: cjoakim/cosmosdb-gemlin-bulkloader
+    environment:
+    - AZURE_COSMOSDB_GRAPHDB_CONN_STRING=${AZURE_COSMOSDB_GRAPHDB_CONN_STRING}
+    - AZURE_COSMOSDB_GRAPHDB_DBNAME=${AZURE_COSMOSDB_GRAPHDB_DBNAME}
+    - AZURE_COSMOSDB_GRAPHDB_GRAPH=${AZURE_COSMOSDB_GRAPHDB_GRAPH}
+    - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+    - CLI_ARGS_STRING=preprocess --!verbose --file-type vertex --blob-container bulkloader --blob-name imdb/loader_movie_vertices.csv
