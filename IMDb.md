@@ -1,17 +1,17 @@
-# IMDd dataset for azure-cosmosdb-gemlin-bulkloader
+# IMDd dataset for azure-cosmosdb-gremlin-bulkloader
 
 This repository has a **companion GitHub repository** with curated sample CSV 
 data the BulkImport program can load into your Azure CosmosDB Graph database.
 
 
-See https://github.com/cjoakim/azure-cosmosdb-gemlin-bulkloader-sample-data
+See https://github.com/cjoakim/azure-cosmosdb-gremlin-bulkloader-sample-data
 
 ## Loading 
 
 First, clone the sample data repo:
 
 ```
-$ git clone https://github.com/cjoakim/azure-cosmosdb-gemlin-bulkloader-sample-data.git
+$ git clone https://github.com/cjoakim/azure-cosmosdb-gremlin-bulkloader-sample-data.git
 ```
 
 This repo contains the following CSV files:
@@ -29,8 +29,8 @@ See the following two scripts in this repo, and modify them as necessary for
 your filesystem or Azure Storage blob locations:
 
 ```
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_blobs.sh
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_files.sh
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_blobs.sh
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_files.sh
 ```
 
 Once this graph data is loaded by the BulkLoader, you can execute Gremlin

@@ -4,7 +4,7 @@
 # Chris Joakim, Microsoft, May 2021
 
 # data_dir points to the companion github repo; change this value for your system
-$data_dir="C:\Users\chjoakim\github\azure-cosmosdb-gemlin-bulkloader-sample-data\imdb\"
+$data_dir="C:\Users\chjoakim\github\azure-cosmosdb-gremlin-bulkloader-sample-data\imdb\"
 
 $movie_vertices=$data_dir + "loader_movie_vertices.csv"
 $person_vertices=$data_dir + "loader_person_vertices.csv"

@@ -86,10 +86,10 @@ Additionally, several other command line arguments are available:
 See the following scripts in this repository with command-line examples:
 
 ```
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_blobs.ps1  (PowerShell for Windows)
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_blobs.sh   (bash for Linux & macOS)
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_files.ps1  (PowerShell for Windows)
-cosmosdb-gemlin-bulkloader/loader/load_imdb_graph_from_files.sh   (bash for Linux & macOS)
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_blobs.ps1  (PowerShell for Windows)
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_blobs.sh   (bash for Linux & macOS)
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_files.ps1  (PowerShell for Windows)
+cosmosdb-gremlin-bulkloader/loader/load_imdb_graph_from_files.sh   (bash for Linux & macOS)
 ```
 
 ### CSV File Format
@@ -105,7 +105,7 @@ in the graph which they are connecting to.
 
 **The Vertices should be loaded first, then the Edges.**
 
-See the [companion repository](https://github.com/cjoakim/azure-cosmosdb-gemlin-bulkloader-sample-data) 
+See the [companion repository](https://github.com/cjoakim/azure-cosmosdb-gremlin-bulkloader-sample-data) 
 which contains an example of creating a logical set of CSV files with python and pandas.
 
 #### Vertices
@@ -205,7 +205,7 @@ The key [NuGet](https://www.nuget.org/) packages it uses are:
 #### Compiling/Building the Code
 
 ```
-$ cd cosmosdb-gemlin-bulkloader/loader
+$ cd cosmosdb-gremlin-bulkloader/loader
 $ dotnet restore
 $ dotnet build
 
@@ -233,7 +233,7 @@ This sample data implements a [Six Degrees of Kevin Bacon](https://en.wikipedia.
 graph.
 
 See the instructions for using [the curated IMDb dataset](IMDb.md), as well as the
-[companion repository](https://github.com/cjoakim/azure-cosmosdb-gemlin-bulkloader-sample-data).
+[companion repository](https://github.com/cjoakim/azure-cosmosdb-gremlin-bulkloader-sample-data).
 
 ### Sample Output
 
@@ -409,11 +409,11 @@ Sat May  8 10:56:43 UTC 2021
 
 This BulkImport utility program can be packaged and executed as a Docker Container.
 See files **Dockerfile**, **.dockerignore**, and **build.sh** in subdirectory
-**cosmosdb-gemlin-bulkloader/loader**.
+**cosmosdb-gremlin-bulkloader/loader**.
 
 The following public image is available on DockerHub:
 ```
-cjoakim/cosmosdb-gemlin-bulkloader:latest
+cjoakim/cosmosdb-gremlin-bulkloader:latest
 ```
 
 Since this BulkImport utility can be containerized, it can run in environments such as 
@@ -428,7 +428,7 @@ variables and command line arguments to the program.
 version: '3'
 services:
   console:
-    image: cjoakim/cosmosdb-gemlin-bulkloader
+    image: cjoakim/cosmosdb-gremlin-bulkloader
     environment:
     - AZURE_COSMOSDB_GRAPHDB_CONN_STRING=${AZURE_COSMOSDB_GRAPHDB_CONN_STRING}
     - AZURE_COSMOSDB_GRAPHDB_DBNAME=${AZURE_COSMOSDB_GRAPHDB_DBNAME}
@@ -447,7 +447,7 @@ $ docker-compose down      <-- shut down the container
 
 #### Azure Container Instances (ACI)
 
-See the **cosmosdb-gemlin-bulkloader/loader/aci/** directory in this repository.
+See the **cosmosdb-gremlin-bulkloader/loader/aci/** directory in this repository.
 
 There are working bash scripts there that can execute this Docker container
 in ACI, as well as fetch the logs produced by the program.

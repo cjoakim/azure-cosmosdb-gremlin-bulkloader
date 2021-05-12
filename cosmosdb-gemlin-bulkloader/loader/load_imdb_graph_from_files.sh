@@ -5,7 +5,7 @@
 # Chris Joakim, Microsoft, May 2021
 
 # data_dir points to the companion github repo; change this value for your system
-data_dir="/Users/cjoakim/github/azure-cosmosdb-gemlin-bulkloader-sample-data/imdb"
+data_dir="/Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb"
 
 function="load"  # valid values are 'preprocess' or 'load'
 verbose_flag="--notverbose"

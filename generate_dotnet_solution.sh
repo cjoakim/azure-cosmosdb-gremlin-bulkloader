@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Use the dotnet CLI to bootstrap this project.
-# Chris Joakim, Microsoft, 2021/04/27
+# Chris Joakim, Microsoft, May 2021
 
-solution_name="cosmosdb-gemlin-bulkloader"
+solution_name="cosmosdb-gremlin-bulkloader"
 
 echo ''
 echo '=========='

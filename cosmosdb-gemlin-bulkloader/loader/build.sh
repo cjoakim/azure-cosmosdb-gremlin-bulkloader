@@ -4,7 +4,7 @@
 # See https://docs.microsoft.com/en-us/dotnet/core/docker/build-container?tabs=windows#create-the-dockerfile
 # Chris Joakim, Microsoft, May 2021
 
-image_name="cjoakim/cosmosdb-gemlin-bulkloader"
+image_name="cjoakim/cosmosdb-gremlin-bulkloader"
 
 echo '=== build ...'
 dotnet build

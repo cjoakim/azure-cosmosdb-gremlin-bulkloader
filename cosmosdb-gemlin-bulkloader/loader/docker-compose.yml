@@ -1,7 +1,7 @@
 version: '3'
 services:
   console:
-    image: cjoakim/cosmosdb-gemlin-bulkloader
+    image: cjoakim/cosmosdb-gremlin-bulkloader
     environment:
     - AZURE_COSMOSDB_GRAPHDB_CONN_STRING=${AZURE_COSMOSDB_GRAPHDB_CONN_STRING}
     - AZURE_COSMOSDB_GRAPHDB_DBNAME=${AZURE_COSMOSDB_GRAPHDB_DBNAME}

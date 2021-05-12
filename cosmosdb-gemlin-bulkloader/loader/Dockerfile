@@ -17,7 +17,7 @@ COPY --from=build /app .
 ENTRYPOINT ["dotnet", "loader.dll"]
 
 
-# docker build -t cjoakim/cosmosdb-gemlin-bulkloader -f Dockerfile . 
-# docker images | grep cjoakim/cosmosdb-gemlin-bulkloader
+# docker build -t cjoakim/cosmosdb-gremlin-bulkloader -f Dockerfile . 
+# docker images | grep cjoakim/cosmosdb-gremlin-bulkloader
 # docker login -u <user> -p <password>
-# docker push cjoakim/cosmosdb-gemlin-bulkloader:latest
+# docker push cjoakim/cosmosdb-gremlin-bulkloader:latest
