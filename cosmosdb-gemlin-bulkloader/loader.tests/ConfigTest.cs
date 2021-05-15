@@ -101,6 +101,31 @@ namespace loader.tests
         }
 
         [Fact]
+        public void ThrottleTest()
+        {
+            string[] args = { };
+            Config c = new Config(args);
+            Assert.True(c.GetThrottle() == Config.DEFAULT_THROTTLE);
+            Assert.True(c.GetThrottle() == 75);
+
+            args = "load --throttle 1000".Split();
+            c = new Config(args);
+            Assert.True(c.GetThrottle() == 100);
+            
+            args = "load --throttle 0".Split();
+            c = new Config(args);
+            Assert.True(c.GetThrottle() == 0);
+            
+            args = "load --throttle -8".Split();
+            c = new Config(args);
+            Assert.True(c.GetThrottle() == 0);
+            
+            args = "load --throttle 42".Split();
+            c = new Config(args);
+            Assert.True(c.GetThrottle() == 42);
+        }
+        
+        [Fact]
         public void PartitionKeyTest()
         {
             string[] args = { };

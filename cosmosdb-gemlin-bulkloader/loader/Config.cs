@@ -37,6 +37,7 @@ namespace CosmosGemlinBulkLoader
         public const string PARTITION_KEY_KEYWORD          = "--partition-key";
         public const string BLOB_CONTAINER_KEYWORD         = "--blob-container";
         public const string BLOB_NAME_KEYWORD              = "--blob-name";
+        public const string THROTTLE_KEYWORD               = "--throttle";
         public const string VERBOSE_FLAG                   = "--verbose";
 
         public const char   DEFAULT_CSV_FIELD_SEPARATOR    = ',';
@@ -45,7 +46,8 @@ namespace CosmosGemlinBulkLoader
         public const string DEFAULT_PARTITON_KEY_ATTR      = "pk";
         public const string FILE_TYPE_VERTEX               = "vertex";  
         public const string FILE_TYPE_EDGE                 = "edge";
-        public const long   DEFAULT_BATCH_SIZE             = 25000; 
+        public const long   DEFAULT_BATCH_SIZE             = 25000;
+        public const int    DEFAULT_THROTTLE               = 75; 
         public const int    MIN_VERTEX_ROW_FIELD_COUNT     = 3;
         public const int    MIN_EDGE_ROW_FIELD_COUNT       = 9;
 
@@ -264,6 +266,32 @@ namespace CosmosGemlinBulkLoader
             }
         }
 
+        /**
+         * Return an int between 0 and 100.  0 = Autothrottle.  Defaults to DEFAULT_THROTTLE (75).
+         */
+        public int GetThrottle()
+        {
+            try
+            {
+                int t =  Int32.Parse(GetCliKeywordArg(THROTTLE_KEYWORD));
+                if (t > 100)
+                {
+                    return 100;
+                }
+                if (t < 0)
+                {
+                    return 0;
+                }
+                return t;
+            }
+            catch (Exception e)
+            {
+                int d = DEFAULT_THROTTLE;
+                Console.Write($"WARNING: non-numeric --throttle, defaulting to {d} due to {e.Message}");
+                return d;
+            }
+        }
+        
         public string GetFileType()
         {
             return GetCliKeywordArg(FILE_TYPE_KEYWORD);
