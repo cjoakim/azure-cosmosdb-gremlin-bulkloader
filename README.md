@@ -81,7 +81,8 @@ Additionally, several other command line arguments are available:
 
 - **--partition-key** - specify the partition key attribute name; defaults to **pk**.
 - **--verbose** - verbose flag.  if true, then each row will be displayed; defaults to **false**.
-- **--batch-size** - used during **load** runs of the program; defaults to **25,000**.  Enables processing huge input files.
+- **--batch-size** - used during **load** runs of the program; defaults to **10,000**.  Enables processing huge input files.
+- **--throttle** - used during **load** runs of the program; an integer from 1 (slower) to 10 (faster).  Defaults to 5.
 
 See the following scripts in this repository with command-line examples:
 
@@ -251,156 +252,191 @@ It will log, in sequence:
 **It is recommended that you first run the job in "preproces" mode before "load" mode.**
 
 ```
-=== person_to_movie_edges
-start timestamp: 2021/05/08 10:55:26
-Config#IsValid args: ["load","--notverbose","--file-type","edge","--blob-container","bulkloader","--blob-name","imdb/loader_person_to_movie_edges.csv"]
+=== movie_vertices
+start timestamp: 2021/05/15 17:31:07
+Config#IsValid args: ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
 blob input specified for this run
 Config:
-  args:            ["load","--notverbose","--file-type","edge","--blob-container","bulkloader","--blob-name","imdb/loader_person_to_movie_edges.csv"]
+  args:            ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
   run type:        load
-  infile:
-  file type:       edge
-  batch size:      50000
+  infile:          
+  file type:       vertex
+  batch size:      20000
   csv field sep:   ,
   datatype sep:    :
   array value sep: ^
-Config#IsValid args: ["load","--notverbose","--file-type","edge","--blob-container","bulkloader","--blob-name","imdb/loader_person_to_movie_edges.csv"]
+Config#IsValid args: ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
 blob input specified for this run
-Creating GraphBulkExecutor...
+GraphBulkExecutor constructor:
   dbName:   dev
   collName: imdb_blobs
   connStr:  AccountEndpoint=https://cjoakimcosmosgremlin.documents.azure.com:443/;AccountKey
 GraphBulkExecutor#constructor completed
+GraphBulkExecutor#InitializeThrottle...
+GraphBulkExecutor#GetThroughputRU databaseRU 50000
+GraphBulkExecutor#GetThroughputRU containerRU 
+GraphBulkExecutor#InitializeThrottle targetRuSetting 50000
+Throttle constructor; value: 1, actualRu: 50000, multiplier: 10, delay: 16500
+Throttle; value: 1, ru: 50000, delay: 16500, multiplier: 10
 CsvReader header row fields: [
-  "EdgeId",
-  "EdgePk",
-  "EdgeLabel",
-  "FromVertexId",
-  "FromVertexPk",
-  "FromVertexLabel",
-  "ToVertexId",
-  "ToVertexPk",
-  "ToVertexLabel",
-  "epoch:double"
+  "Id",
+  "Pk",
+  "Label",
+  "Title",
+  "Year:int",
+  "Minutes:int"
 ]
 HeaderRow:
-  source:       blob: bulkloader imdb/loader_person_to_movie_edges.csv
-  fileType:     edge
+  source:       blob: bulkloader imdb/loader_movie_vertices.csv
+  fileType:     vertex
   fieldSep:     ,
   datatypeSep:  :
-  field count:  10
+  field count:  6
   errors count: 0
-  CsvField index: 0, key: EdgeId, name: EdgeId, datatype: string, valid: True
-  CsvField index: 1, key: EdgePk, name: EdgePk, datatype: string, valid: True
-  CsvField index: 2, key: EdgeLabel, name: EdgeLabel, datatype: string, valid: True
-  CsvField index: 3, key: FromVertexId, name: FromVertexId, datatype: string, valid: True
-  CsvField index: 4, key: FromVertexPk, name: FromVertexPk, datatype: string, valid: True
-  CsvField index: 5, key: FromVertexLabel, name: FromVertexLabel, datatype: string, valid: True
-  CsvField index: 6, key: ToVertexId, name: ToVertexId, datatype: string, valid: True
-  CsvField index: 7, key: ToVertexPk, name: ToVertexPk, datatype: string, valid: True
-  CsvField index: 8, key: ToVertexLabel, name: ToVertexLabel, datatype: string, valid: True
-  CsvField index: 9, key: epoch:double, name: epoch, datatype: double, valid: True
+  CsvField index: 0, key: Id, name: Id, datatype: string, valid: True
+  CsvField index: 1, key: Pk, name: Pk, datatype: string, valid: True
+  CsvField index: 2, key: Label, name: Label, datatype: string, valid: True
+  CsvField index: 3, key: Title, name: Title, datatype: string, valid: True
+  CsvField index: 4, key: Year:int, name: Year, datatype: int, valid: True
+  CsvField index: 5, key: Minutes:int, name: Minutes, datatype: int, valid: True
   row dict: {
-  "EdgeId": "nm0844752-tt0015724",
-  "EdgePk": "nm0844752-tt0015724",
-  "EdgeLabel": "is_in",
-  "FromVertexId": "nm0844752",
-  "FromVertexPk": "nm0844752",
-  "FromVertexLabel": "Person",
-  "ToVertexId": "tt0015724",
-  "ToVertexPk": "tt0015724",
-  "ToVertexLabel": "Movie",
-  "epoch:double": "1620420703.6033332"
+  "Id": "tt0015724",
+  "Pk": "tt0015724",
+  "Label": "Movie",
+  "Title": "Dama de noche",
+  "Year:int": "1993",
+  "Minutes:int": "102"
 }
 {
-  "Id": "nm0844752-tt0015724",
-  "Label": "is_in",
-  "InVertexId": "tt0015724",
-  "OutVertexId": "nm0844752",
-  "InVertexLabel": "Movie",
-  "OutVertexLabel": "Person",
-  "InVertexPartitionKey": "tt0015724",
-  "OutVertexPartitionKey": "nm0844752",
-  "Properties": [
-    {
-      "Key": "epoch",
-      "Value": 1620420703.6033332
-    }
-  ]
+  "Id": "tt0015724",
+  "Label": "Movie",
+  "Properties": {
+    "pk": [
+      {
+        "Id": null,
+        "Key": "pk",
+        "Value": "tt0015724"
+      }
+    ],
+    "Title": [
+      {
+        "Id": null,
+        "Key": "Title",
+        "Value": "Dama de noche"
+      }
+    ],
+    "Year": [
+      {
+        "Id": null,
+        "Key": "Year",
+        "Value": 1993
+      }
+    ],
+    "Minutes": [
+      {
+        "Id": null,
+        "Key": "Minutes",
+        "Value": 102
+      }
+    ]
+  }
 }
   row dict: {
-  "EdgeId": "nm0869732-tt0015724",
-  "EdgePk": "nm0869732-tt0015724",
-  "EdgeLabel": "is_in",
-  "FromVertexId": "nm0869732",
-  "FromVertexPk": "nm0869732",
-  "FromVertexLabel": "Person",
-  "ToVertexId": "tt0015724",
-  "ToVertexPk": "tt0015724",
-  "ToVertexLabel": "Movie",
-  "epoch:double": "1620420703.6033401"
+  "Id": "tt0035423",
+  "Pk": "tt0035423",
+  "Label": "Movie",
+  "Title": "Kate & Leopold",
+  "Year:int": "2001",
+  "Minutes:int": "118"
 }
 {
-  "Id": "nm0869732-tt0015724",
-  "Label": "is_in",
-  "InVertexId": "tt0015724",
-  "OutVertexId": "nm0869732",
-  "InVertexLabel": "Movie",
-  "OutVertexLabel": "Person",
-  "InVertexPartitionKey": "tt0015724",
-  "OutVertexPartitionKey": "nm0869732",
-  "Properties": [
-    {
-      "Key": "epoch",
-      "Value": 1620420703.6033401
-    }
-  ]
+  "Id": "tt0035423",
+  "Label": "Movie",
+  "Properties": {
+    "pk": [
+      {
+        "Id": null,
+        "Key": "pk",
+        "Value": "tt0035423"
+      }
+    ],
+    "Title": [
+      {
+        "Id": null,
+        "Key": "Title",
+        "Value": "Kate & Leopold"
+      }
+    ],
+    "Year": [
+      {
+        "Id": null,
+        "Key": "Year",
+        "Value": 2001
+      }
+    ],
+    "Minutes": [
+      {
+        "Id": null,
+        "Key": "Minutes",
+        "Value": 118
+      }
+    ]
+  }
 }
   row dict: {
-  "EdgeId": "nm0194720-tt0015724",
-  "EdgePk": "nm0194720-tt0015724",
-  "EdgeLabel": "is_in",
-  "FromVertexId": "nm0194720",
-  "FromVertexPk": "nm0194720",
-  "FromVertexLabel": "Person",
-  "ToVertexId": "tt0015724",
-  "ToVertexPk": "tt0015724",
-  "ToVertexLabel": "Movie",
-  "epoch:double": "1620420703.603343"
+  "Id": "tt0036177",
+  "Pk": "tt0036177",
+  "Label": "Movie",
+  "Title": "Muhomatsu no issho",
+  "Year:int": "2008",
+  "Minutes:int": "100"
 }
 {
-  "Id": "nm0194720-tt0015724",
-  "Label": "is_in",
-  "InVertexId": "tt0015724",
-  "OutVertexId": "nm0194720",
-  "InVertexLabel": "Movie",
-  "OutVertexLabel": "Person",
-  "InVertexPartitionKey": "tt0015724",
-  "OutVertexPartitionKey": "nm0194720",
-  "Properties": [
-    {
-      "Key": "epoch",
-      "Value": 1620420703.603343
-    }
-  ]
+  "Id": "tt0036177",
+  "Label": "Movie",
+  "Properties": {
+    "pk": [
+      {
+        "Id": null,
+        "Key": "pk",
+        "Value": "tt0036177"
+      }
+    ],
+    "Title": [
+      {
+        "Id": null,
+        "Key": "Title",
+        "Value": "Muhomatsu no issho"
+      }
+    ],
+    "Year": [
+      {
+        "Id": null,
+        "Key": "Year",
+        "Value": 2008
+      }
+    ],
+    "Minutes": [
+      {
+        "Id": null,
+        "Key": "Minutes",
+        "Value": 100
+      }
+    ]
+  }
 }
-Start of batch load 1, with 50000 elements, at 2021/05/08 10:55:28
-Batch load 1 completed in 13609ms
-Start of batch load 2, with 50000 elements, at 2021/05/08 10:55:43
-Batch load 2 completed in 12728ms
-Start of batch load 3, with 50000 elements, at 2021/05/08 10:55:56
-Batch load 3 completed in 12645ms
-Start of batch load 4, with 50000 elements, at 2021/05/08 10:56:10
-Batch load 4 completed in 12683ms
-Start of batch load 5, with 50000 elements, at 2021/05/08 10:56:23
-Batch load 5 completed in 12721ms
-Start of batch load 6, with 26551 elements, at 2021/05/08 10:56:36
-Batch load 6 completed in 6433ms
-finish timestamp: 2021/05/08 10:56:43
-Main completed in: 76089 ms, rowCount: 276552
+Start of batch load 1, with 20000 elements, at 2021/05/15 17:31:11
+Batch load 1 completed in 20074ms
+Start of batch load 2, with 20000 elements, at 2021/05/15 17:31:31
+Batch load 2 completed in 22338ms
+Start of batch load 3, with 20000 elements, at 2021/05/15 17:31:54
+Batch load 3 completed in 20897ms
+Start of batch load 4, with 12253 elements, at 2021/05/15 17:32:15
+Batch load 4 completed in 19404ms
+finish timestamp: 2021/05/15 17:32:35
+Main completed in: 87512 ms, rowCount: 72254
 Disposing GraphBulkExecutor...
 GraphBulkExecutor#Dispose completed
-Sat May  8 10:56:43 UTC 2021
 ```
 
 ---

@@ -38,6 +38,7 @@ namespace CosmosGemlinBulkLoader
         public const string BLOB_CONTAINER_KEYWORD         = "--blob-container";
         public const string BLOB_NAME_KEYWORD              = "--blob-name";
         public const string THROTTLE_KEYWORD               = "--throttle";
+        public const string THROTTLE_TASK_MS_KEYWORD       = "--throttle-task-ms";
         public const string VERBOSE_FLAG                   = "--verbose";
 
         public const char   DEFAULT_CSV_FIELD_SEPARATOR    = ',';
@@ -46,11 +47,17 @@ namespace CosmosGemlinBulkLoader
         public const string DEFAULT_PARTITON_KEY_ATTR      = "pk";
         public const string FILE_TYPE_VERTEX               = "vertex";  
         public const string FILE_TYPE_EDGE                 = "edge";
-        public const long   DEFAULT_BATCH_SIZE             = 25000;
-        public const int    DEFAULT_THROTTLE               = 75; 
+        public const int    DEFAULT_BATCH_SIZE             = 10000;
+        public const int    DEFAULT_THROTTLE               = 5; 
+        public const int    BASE_THROTTLE_TASK_MS          = 12000;
         public const int    MIN_VERTEX_ROW_FIELD_COUNT     = 3;
         public const int    MIN_EDGE_ROW_FIELD_COUNT       = 9;
-
+        public const int    MAX_BATCH_SIZE                 = 20000;
+        public const int    MIN_BATCH_SIZE                 = 10;
+        public const int    MAX_THROTTLE                   = 10; 
+        public const int    MIN_THROTTLE                   = 1; 
+        public const int    MIN_RU_SETTING                 = 5000; 
+        
         // Instance variables:
         private string[] cliArgs = { };
 
@@ -110,6 +117,29 @@ namespace CosmosGemlinBulkLoader
                     return false;
                 }
             }
+
+            if (GetBatchSize() > MAX_BATCH_SIZE)
+            {
+                Console.WriteLine("ERROR: Batch size is too large {0}, max is {1}", GetBatchSize(), MAX_BATCH_SIZE);
+                return false;
+            }
+            if (GetBatchSize() < MIN_BATCH_SIZE)
+            {
+                Console.WriteLine("ERROR: Batch size is too small {0}, min is {1}", GetBatchSize(), MIN_BATCH_SIZE);
+                return false;
+            }
+            
+            if (GetThrottle() > MAX_THROTTLE)
+            {
+                Console.WriteLine("ERROR: Throttle value is too large {0}, max is {1}", GetThrottle(), MAX_THROTTLE);
+                return false;
+            }
+            if (GetThrottle() < MIN_THROTTLE)
+            {
+                Console.WriteLine("ERROR: Throttle value is too small {0}, min is {1}", GetThrottle(), MIN_THROTTLE);
+                return false;
+            }
+            
             return true;
         }
 
@@ -245,7 +275,7 @@ namespace CosmosGemlinBulkLoader
             }
         }
 
-        public long GetBatchSize()
+        public int GetBatchSize()
         {
             string num = GetCliKeywordArg(BATCH_SIZE_KEYWORD);
             if (num == null)
@@ -256,14 +286,19 @@ namespace CosmosGemlinBulkLoader
             {
                 try
                 {
-                    return long.Parse(num);
+                    return int.Parse(num);
                 }
                 catch
                 {
-                    Console.WriteLine($"WARNING: unable to parse batch size {0}, using default", num);
+                    Console.WriteLine("WARNING: unable to parse batch size {0}, using default", num);
                     return DEFAULT_BATCH_SIZE;
                 }
             }
+        }
+        
+        public int GetBaseThrottleTaskMilliseconds()
+        {
+            return BASE_THROTTLE_TASK_MS;
         }
 
         /**
@@ -273,16 +308,7 @@ namespace CosmosGemlinBulkLoader
         {
             try
             {
-                int t =  Int32.Parse(GetCliKeywordArg(THROTTLE_KEYWORD));
-                if (t > 100)
-                {
-                    return 100;
-                }
-                if (t < 0)
-                {
-                    return 0;
-                }
-                return t;
+                return Int32.Parse(GetCliKeywordArg(THROTTLE_KEYWORD));
             }
             catch (Exception e)
             {

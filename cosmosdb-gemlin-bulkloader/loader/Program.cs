@@ -26,7 +26,6 @@ namespace CosmosGemlinBulkLoader
     using System.IO;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     public class Program
     {
@@ -65,14 +64,37 @@ namespace CosmosGemlinBulkLoader
             {
                 long startTime = EpochMsTime();
                 Console.WriteLine($"start timestamp: {CurrentTimestamp()}");
-                config = LoadConfig(args);
+                config = InitializeConfig(args);
                 if (!config.IsValid())
                 {
                     System.Environment.Exit(1);
                 }
-                if (config.DoLoad())
+                graphBulkExecutor = new GraphBulkExecutor(config);
+                await graphBulkExecutor.InitializeThrottle();
+                if (!graphBulkExecutor.throttle.IsValid())
                 {
-                    graphBulkExecutor = CreateGraphBulkExecutor();
+                    System.Environment.Exit(2);
+                }
+
+                if (config.GetCliKeywordArg("--test", "") == "throttle")
+                {
+                    Console.WriteLine("TESTING: let's test the Throttle!");
+                    int baseCount = 100;
+                    Throttle t = null;
+                    
+                    for (int level = 1; level <= 10; level++)
+                    {
+                        List<Task> tasks = new List<Task>();
+                        t = new Throttle(config, 10000, level);
+                        t.Display();
+                        for (int i = 0; i < baseCount; i++)
+                        {
+                            t.AddTask(tasks);
+                        }
+                        List<Task> shuffled = t.AddShuffleThrottlingTasks(tasks);
+                        Console.WriteLine($"TESTING: {shuffled.Count} tasks for level {level} with base count {baseCount}");
+                    }
+                    System.Environment.Exit(0);
                 }
                 
                 parser = new CsvRowParser(config);
@@ -94,7 +116,7 @@ namespace CosmosGemlinBulkLoader
                     ParseHeaderRow(csv.HeaderRecord);
                     if (!headerRow.IsValid())
                     {
-                        System.Environment.Exit(2);
+                        System.Environment.Exit(3);
                     }
 
                     // Data Row Processing Loop
@@ -127,7 +149,7 @@ namespace CosmosGemlinBulkLoader
                                 // Process the Bulk Loads in configurable batches so as to handle huge input files
                                 if (elements.Count == batchSize)
                                 {
-                                    await Load(elements);
+                                    await LoadDatabase(elements);
                                     elements = new List<IGremlinElement>();  // reset the List for the next batch
                                 }
                             }
@@ -139,7 +161,7 @@ namespace CosmosGemlinBulkLoader
                 {
                     if (elements.Count > 0)
                     {
-                        await Load(elements);  // load the last batch
+                        await LoadDatabase(elements);  // load the last batch
                     }
                 }
                 long elapsedTime = EpochMsTime() - startTime;
@@ -162,7 +184,7 @@ namespace CosmosGemlinBulkLoader
             await Task.Delay(0);
         }
 
-        static Config LoadConfig(string[] args)
+        static Config InitializeConfig(string[] args)
         {
             config = new Config(args);
             if (config.IsValid())
@@ -176,18 +198,6 @@ namespace CosmosGemlinBulkLoader
             return config;
         }
 
-        static GraphBulkExecutor CreateGraphBulkExecutor()
-        {
-            string connStr  = config.GetCosmosConnString();
-            string dbName   = config.GetCosmosDbName();
-            string collName = config.GetCosmosGraphName();
-            Console.WriteLine("Creating GraphBulkExecutor...");
-            Console.WriteLine("  dbName:   {0}", dbName);
-            Console.WriteLine("  collName: {0}", collName);
-            Console.WriteLine("  connStr:  {0}", connStr.Substring(0, 80));
-            return new GraphBulkExecutor(connStr, dbName, collName); 
-        }
-        
         /**
          * Return a StreamReader sourced from either a local file, or an Azure Storage Blob,
          * per command-line inputs.  If Blob, then also connect to Azure Storage.
@@ -235,13 +245,15 @@ namespace CosmosGemlinBulkLoader
             }
         }
 
-        static async Task Load(List<IGremlinElement> elements)
+        static async Task LoadDatabase(List<IGremlinElement> elements)
         {
             batchCount++;
             long startTime = EpochMsTime();
             Console.WriteLine("Start of batch load {0}, with {1} elements, at {2}", 
                 batchCount, elements.Count, CurrentTimestamp());
-            await graphBulkExecutor.BulkImportAsync(elements, false);
+            
+            await graphBulkExecutor.BulkImportAsync(elements, true);
+            
             Console.WriteLine("Batch load {0} completed in {1}ms", batchCount, EpochMsTime() - startTime);
         }
 

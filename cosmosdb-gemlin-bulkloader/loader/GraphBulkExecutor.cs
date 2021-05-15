@@ -23,36 +23,90 @@ namespace CosmosGemlinBulkLoader
     {
         private readonly SemaphoreSlim initializationSyncLock = new SemaphoreSlim(1, 1);
         private readonly bool isMultiValuedAndMetaPropertiesDisabled = false;  // cj!
-        private readonly Container container;
+        private readonly Database database = null;
+        private readonly Container container = null;
 
+        private Config config;
         private VertexDocumentHelper vertexDocumentHelper;
         private EdgeDocumentHelper edgeDocumentHelper;
         private CosmosClient client;
+        public Throttle throttle = null;
         private string VertexPartitionProperty;
         private bool isDisposed = false;
         private bool isSuccessfullyInitialized = false;
 
-        public GraphBulkExecutor(
-            string connectionString,
-            string databaseName,
-            string containerName)
+        public GraphBulkExecutor(Config config)
         {
-            if (string.IsNullOrEmpty(connectionString))
+            this.config     = config;
+            string connStr  = config.GetCosmosConnString();
+            string dbName   = config.GetCosmosDbName();
+            string collName = config.GetCosmosGraphName();
+            
+            Console.WriteLine("GraphBulkExecutor constructor:");
+            Console.WriteLine("  dbName:   {0}", dbName);
+            Console.WriteLine("  collName: {0}", collName);
+            Console.WriteLine("  connStr:  {0}", connStr.Substring(0, 80)); 
+            
+            if (string.IsNullOrEmpty(connStr))
             {
-                throw new ArgumentNullException(nameof(connectionString));
+                throw new ArgumentNullException(nameof(connStr));
             }
 
-            this.client = new CosmosClient(connectionString,
+            this.client = new CosmosClient(connStr,
                 new CosmosClientOptions()
                 {
                     AllowBulkExecution = true,
                     ApplicationName = GraphBulkExecutor.GetApplicationName()
                 });
 
-            this.container = this.client.GetContainer(databaseName, containerName);
+            this.database = this.client.GetDatabase(dbName);
+            this.container = this.client.GetContainer(dbName, collName);
             Console.WriteLine("GraphBulkExecutor#constructor completed");
         }
+        
+        public async Task<int> InitializeThrottle()
+        {
+            Console.WriteLine("GraphBulkExecutor#InitializeThrottle...");
+            int targetRuSetting = await this.GetThroughputRU();
+            Console.WriteLine($"GraphBulkExecutor#InitializeThrottle targetRuSetting {targetRuSetting}");
+            this.throttle = new Throttle(config, targetRuSetting);
+            throttle.Display();
+            return targetRuSetting;
+        }
 
+        /**
+         * Return the throughput in RU of either the database, or the graph.
+         * Return 0 if unable to determine the RU setting.
+         */
+        public async Task<int> GetThroughputRU()
+        {
+            try
+            {
+                // Note: the ReadThroughputAsync methods return the CURRENT RU setting,
+                // and not the potentially higher autoscaled setting.
+                // For example, can return 5000 when the autoscale max is 50000.
+                
+                int? databaseRU = await database.ReadThroughputAsync();
+                Console.WriteLine($"GraphBulkExecutor#GetThroughputRU databaseRU {databaseRU}");
+                
+                int? containerRU = await container.ReadThroughputAsync();
+                Console.WriteLine($"GraphBulkExecutor#GetThroughputRU containerRU {containerRU}");
+                
+                if (databaseRU != null)
+                {
+                    return (int) databaseRU;
+                }
+                if (containerRU != null)
+                {
+                    return (int) containerRU;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return 0;
+        }
         public async Task BulkImportAsync(
             IEnumerable<IGremlinElement> gremlinElements,
             bool enableUpsert = true,
@@ -61,25 +115,41 @@ namespace CosmosGemlinBulkLoader
             this.ThrowIfDisposed();
             await this.InitializeAsync(cancellationToken);
 
+            List<Task> tasks = new List<Task>();
             List<JObject> elements =
                 gremlinElements.Select(
                     element => this.GetGraphElementDocument(element)).ToList();
-            List<Task> tasks = new List<Task>(elements.Count);
-
+            
             foreach (JObject element in elements)
             {
                 if (enableUpsert)
                 {
-                    tasks.Add(this.container.UpsertItemAsync(element, cancellationToken: cancellationToken).CaptureOperationResponse(element));
+                    tasks.Add(this.container.UpsertItemAsync(
+                        element, cancellationToken: cancellationToken).CaptureOperationResponse(element));
                 }
                 else
                 {
-                    tasks.Add(this.container.CreateItemAsync(element, cancellationToken: cancellationToken).CaptureOperationResponse(element));
+                    tasks.Add(this.container.CreateItemAsync(
+                        element, cancellationToken: cancellationToken).CaptureOperationResponse(element));
                 }
             }
-            await Task.WhenAll(tasks);
-        }
+            
+            List<Task> shuffledTasks = throttle.AddShuffleThrottlingTasks(tasks);
+            //Console.WriteLine($"GraphBulkExecutor awaiting {shuffledTasks.Count} tasks...");
 
+            // https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall?view=net-5.0
+            Task allTasks = Task.WhenAll(shuffledTasks.ToArray());
+            await allTasks;
+            int failCount = 0;
+            foreach (var t in shuffledTasks) {
+                if (t.Status != TaskStatus.RanToCompletion)
+                {
+                    failCount++;
+                    Console.WriteLine("TASK Id: {0}, Status: {1}, failCount: {2}", t.Id, t.Status, failCount); 
+                }
+            }
+        }
+        
         public void Dispose()
         {
             if (this.isDisposed)
@@ -162,7 +232,7 @@ namespace CosmosGemlinBulkLoader
 
         private static string GetApplicationName()
         {
-            return string.Format("GraphBulkImportSDK-{0}-{1}",
+            return string.Format("GraphBulkImporter-{0}-{1}",
                 typeof(GraphBulkExecutor).GetTypeInfo().Assembly.GetName().Version,
                 typeof(GraphBulkExecutor).GetTypeInfo().Assembly.ImageRuntimeVersion);
         }

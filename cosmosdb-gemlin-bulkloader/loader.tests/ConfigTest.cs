@@ -85,7 +85,8 @@ namespace loader.tests
         {
             string[] args = { };
             Config c = new Config(args);
-            Assert.True(c.GetBatchSize() == 25000);
+            Assert.True(c.GetBatchSize() == Config.DEFAULT_BATCH_SIZE);
+            Assert.True(c.GetBatchSize() == 10000);
 
             args = "load --batch-size".Split();
             c = new Config(args);
@@ -95,9 +96,9 @@ namespace loader.tests
             c = new Config(args);
             Assert.True(c.GetBatchSize() == Config.DEFAULT_BATCH_SIZE);
 
-            args = "load --batch-size 100000".Split();
+            args = "load --batch-size 20000".Split();
             c = new Config(args);
-            Assert.True(c.GetBatchSize() == 100000);
+            Assert.True(c.GetBatchSize() == 20000);
         }
 
         [Fact]
@@ -106,23 +107,20 @@ namespace loader.tests
             string[] args = { };
             Config c = new Config(args);
             Assert.True(c.GetThrottle() == Config.DEFAULT_THROTTLE);
-            Assert.True(c.GetThrottle() == 75);
+            Assert.True(c.GetThrottle() == 5);
 
-            args = "load --throttle 1000".Split();
+            args = "load --throttle 10".Split();
             c = new Config(args);
-            Assert.True(c.GetThrottle() == 100);
+            Assert.True(c.GetThrottle() == 10);
             
-            args = "load --throttle 0".Split();
+            args = "load --throttle 1".Split();
             c = new Config(args);
-            Assert.True(c.GetThrottle() == 0);
+            Assert.True(c.GetThrottle() == 1);
             
-            args = "load --throttle -8".Split();
+            args = "load --throttle 11".Split();
             c = new Config(args);
-            Assert.True(c.GetThrottle() == 0);
-            
-            args = "load --throttle 42".Split();
-            c = new Config(args);
-            Assert.True(c.GetThrottle() == 42);
+            Assert.True(c.GetThrottle() == 11);
+            Assert.False(c.IsValid());
         }
         
         [Fact]
