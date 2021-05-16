@@ -41,8 +41,10 @@ namespace CosmosGemlinBulkLoader
             string connStr  = config.GetCosmosConnString();
             string dbName   = config.GetCosmosDbName();
             string collName = config.GetCosmosGraphName();
+            string appName  = GraphBulkExecutor.GetApplicationName();
             
             Console.WriteLine("GraphBulkExecutor constructor:");
+            Console.WriteLine("  appName:  {0}", appName);
             Console.WriteLine("  dbName:   {0}", dbName);
             Console.WriteLine("  collName: {0}", collName);
             Console.WriteLine("  connStr:  {0}", connStr.Substring(0, 80)); 
@@ -55,10 +57,16 @@ namespace CosmosGemlinBulkLoader
             this.client = new CosmosClient(connStr,
                 new CosmosClientOptions()
                 {
+                    ApplicationName = appName,
                     AllowBulkExecution = true,
-                    ApplicationName = GraphBulkExecutor.GetApplicationName()
+                    ConnectionMode = ConnectionMode.Direct,
+                    MaxRetryAttemptsOnRateLimitedRequests = 30,
+                    MaxRetryWaitTimeOnRateLimitedRequests = TimeSpan.FromMilliseconds(90000)
                 });
-
+                // See https://docs.microsoft.com/en-us/azure/cosmos-db/performance-tips-dotnet-sdk-v3-sql
+                // MaxRetryAttemptsOnRateLimitedRequests - default is 9
+                // MaxRetryWaitTimeOnRateLimitedRequests - default time is 30 seconds
+            
             this.database = this.client.GetDatabase(dbName);
             this.container = this.client.GetContainer(dbName, collName);
             Console.WriteLine("GraphBulkExecutor#constructor completed");

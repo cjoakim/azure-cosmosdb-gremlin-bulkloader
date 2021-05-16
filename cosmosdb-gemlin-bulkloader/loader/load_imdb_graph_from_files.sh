@@ -9,7 +9,7 @@ data_dir="/Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/im
 
 function="load"  # valid values are 'preprocess' or 'load'
 verbose_flag="--notverbose"
-throttle="10"
+throttle="5"
 
 export AZURE_COSMOSDB_GRAPHDB_GRAPH="imdb_files"
 
@@ -25,6 +25,7 @@ dotnet run $function $verbose_flag \
     --throttle $throttle \
     --file-type vertex \
     --batch-size 20000 \
+    --partition-key pk \
     --csv-infile $data_dir/loader_movie_vertices.csv
 
 echo '=== person_vertices'
@@ -32,6 +33,7 @@ dotnet run $function $verbose_flag \
     --throttle $throttle \
     --file-type vertex \
     --batch-size 20000 \
+    --partition-key pk \
     --csv-infile $data_dir/loader_person_vertices.csv
 
 # Edges
@@ -41,6 +43,7 @@ dotnet run $function $verbose_flag \
     --throttle $throttle \
     --file-type edge \
     --batch-size 20000 \
+    --partition-key pk \
     --csv-infile $data_dir/loader_movie_to_person_edges.csv
 
 echo '=== person_to_movie_edges'
@@ -48,6 +51,7 @@ dotnet run $function $verbose_flag \
     --throttle $throttle \
     --file-type edge \
     --batch-size 20000 \
+    --partition-key pk \
     --csv-infile $data_dir/loader_person_to_movie_edges.csv
 
 date

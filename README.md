@@ -24,10 +24,38 @@ The CSV files can be located either:
 
 **Since the input is in CSV format, each row within a file has to have the same "shape"**.
 
-### Request Units (RU)
+### Request Units (RU) and Recommended Use
 
-Since the BulkLoad program will add data to your CosmosDB database at a high velocity,
-it is recommended that you set the database to **50,000+ RU, Autoscaled, at time of loading**.
+The BulkLoad program will add data to your CosmosDB database at a high velocity,
+therefore it will consume RUs quickly.  Therefore, the following is recommended:
+
+- First use this utility program on a development or test database, not production
+- Run the program several times, vs your development or test database, to get familiar with it
+- Start with a smaller subset CSV files of your actual full-volume data
+- Use the **--throttle** command-line argument; start with the default value of 5
+- Set the database to **50,000+ RU, Autoscaled, at time of loading**
+- Use verification queries, such as the following, to ensure all of your data gets loaded
+
+#### Verification Queries for the Sample IMDb dataset
+
+You can query your CosmosDB/Gremlin database in Azure Portal using SQL syntax, as shown here:
+
+```
+SELECT COUNT(1) FROM c where c.label = 'Movie'
+
+SELECT COUNT(1) FROM c where c.label = 'Person'
+
+SELECT COUNT(1) FROM c where c.label = 'has_person'
+
+SELECT COUNT(1) FROM c where c.label = 'is_in'
+
+SELECT COUNT(1) FROM c 
+[
+  {
+    "$1": 758844    <-- this is the correct count
+  }
+]
+```
 
 ### Configuration
 
@@ -253,31 +281,32 @@ It will log, in sequence:
 
 ```
 === movie_vertices
-start timestamp: 2021/05/15 17:31:07
-Config#IsValid args: ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
-blob input specified for this run
+start timestamp: 2021/05/16 12:36:13
+Config#IsValid args: ["load","--notverbose","--throttle","5","--file-type","vertex","--batch-size","20000","--partition-key","pk","--csv-infile","/Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb/loader_movie_vertices.csv"]
+file input specified for this run
 Config:
-  args:            ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
+  args:            ["load","--notverbose","--throttle","5","--file-type","vertex","--batch-size","20000","--partition-key","pk","--csv-infile","/Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb/loader_movie_vertices.csv"]
   run type:        load
-  infile:          
+  infile:          /Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb/loader_movie_vertices.csv
   file type:       vertex
   batch size:      20000
   csv field sep:   ,
   datatype sep:    :
   array value sep: ^
-Config#IsValid args: ["load","--notverbose","--throttle","1","--file-type","vertex","--batch-size","20000","--blob-container","bulkloader","--blob-name","imdb/loader_movie_vertices.csv"]
-blob input specified for this run
+Config#IsValid args: ["load","--notverbose","--throttle","5","--file-type","vertex","--batch-size","20000","--partition-key","pk","--csv-infile","/Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb/loader_movie_vertices.csv"]
+file input specified for this run
 GraphBulkExecutor constructor:
+  appName:  GraphBulkImporter-1.0.0.0-v4.0.30319
   dbName:   dev
-  collName: imdb_blobs
+  collName: imdb_files
   connStr:  AccountEndpoint=https://cjoakimcosmosgremlin.documents.azure.com:443/;AccountKey
 GraphBulkExecutor#constructor completed
 GraphBulkExecutor#InitializeThrottle...
-GraphBulkExecutor#GetThroughputRU databaseRU 50000
+GraphBulkExecutor#GetThroughputRU databaseRU 5000
 GraphBulkExecutor#GetThroughputRU containerRU 
-GraphBulkExecutor#InitializeThrottle targetRuSetting 50000
-Throttle constructor; value: 1, actualRu: 50000, multiplier: 10, delay: 16500
-Throttle; value: 1, ru: 50000, delay: 16500, multiplier: 10
+GraphBulkExecutor#InitializeThrottle targetRuSetting 5000
+Throttle constructor; value: 5, actualRu: 5000, multiplier: 2, delay: 14500
+Throttle; value: 5, ru: 5000, delay: 14500, multiplier: 2
 CsvReader header row fields: [
   "Id",
   "Pk",
@@ -287,7 +316,7 @@ CsvReader header row fields: [
   "Minutes:int"
 ]
 HeaderRow:
-  source:       blob: bulkloader imdb/loader_movie_vertices.csv
+  source:       file: /Users/cjoakim/github/azure-cosmosdb-gremlin-bulkloader-sample-data/imdb/loader_movie_vertices.csv
   fileType:     vertex
   fieldSep:     ,
   datatypeSep:  :
@@ -425,16 +454,16 @@ HeaderRow:
     ]
   }
 }
-Start of batch load 1, with 20000 elements, at 2021/05/15 17:31:11
-Batch load 1 completed in 20074ms
-Start of batch load 2, with 20000 elements, at 2021/05/15 17:31:31
-Batch load 2 completed in 22338ms
-Start of batch load 3, with 20000 elements, at 2021/05/15 17:31:54
-Batch load 3 completed in 20897ms
-Start of batch load 4, with 12253 elements, at 2021/05/15 17:32:15
-Batch load 4 completed in 19404ms
-finish timestamp: 2021/05/15 17:32:35
-Main completed in: 87512 ms, rowCount: 72254
+Start of batch load 1, with 20000 elements, at 2021/05/16 12:36:16
+Batch load 1 completed in 17601ms
+Start of batch load 2, with 20000 elements, at 2021/05/16 12:36:33
+Batch load 2 completed in 18060ms
+Start of batch load 3, with 20000 elements, at 2021/05/16 12:36:52
+Batch load 3 completed in 17857ms
+Start of batch load 4, with 12253 elements, at 2021/05/16 12:37:10
+Batch load 4 completed in 16237ms
+finish timestamp: 2021/05/16 12:37:26
+Main completed in: 72617 ms, rowCount: 72254
 Disposing GraphBulkExecutor...
 GraphBulkExecutor#Dispose completed
 ```
