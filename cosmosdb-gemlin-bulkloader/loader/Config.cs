@@ -38,6 +38,8 @@ namespace CosmosGemlinBulkLoader
         public const string PARTITION_KEY_KEYWORD          = "--partition-key";
         public const string BLOB_CONTAINER_KEYWORD         = "--blob-container";
         public const string BLOB_NAME_KEYWORD              = "--blob-name";
+        public const string DONE_BLOB_NAME_KEYWORD         = "--done-blob-name";
+        public const string ERROR_BLOB_NAME_KEYWORD        = "--error-blob-name";
         public const string THROTTLE_KEYWORD               = "--throttle";
         public const string THROTTLE_TASK_MS_KEYWORD       = "--throttle-task-ms";
         public const string VERBOSE_FLAG                   = "--verbose";
@@ -200,6 +202,16 @@ namespace CosmosGemlinBulkLoader
         public string GetStorageBlobName()
         {
             return GetCliKeywordArg(BLOB_NAME_KEYWORD);
+        }
+
+        public string GetStorageDoneBlobName()
+        {
+            return GetCliKeywordArg(DONE_BLOB_NAME_KEYWORD);
+        }
+
+        public string GetStorageErrorBlobName()
+        {
+            return GetCliKeywordArg(ERROR_BLOB_NAME_KEYWORD);
         }
 
         public bool IsBlobInput()

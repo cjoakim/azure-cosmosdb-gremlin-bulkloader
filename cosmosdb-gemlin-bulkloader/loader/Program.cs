@@ -24,6 +24,7 @@ namespace CosmosGemlinBulkLoader
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
 
@@ -67,13 +68,13 @@ namespace CosmosGemlinBulkLoader
                 config = InitializeConfig(args);
                 if (!config.IsValid())
                 {
-                    System.Environment.Exit(1);
+                    throw new ConfigurationException("Program configuration is invalid.");
                 }
                 graphBulkExecutor = new GraphBulkExecutor(config);
                 await graphBulkExecutor.InitializeThrottle();
                 if (!graphBulkExecutor.throttle.IsValid())
                 {
-                    System.Environment.Exit(2);
+                    throw new ConfigurationException("Throttling configuration is invalid.");
                 }
 
                 if (config.GetCliKeywordArg("--test", "") == "throttle")
@@ -116,7 +117,7 @@ namespace CosmosGemlinBulkLoader
                     ParseHeaderRow(csv.HeaderRecord);
                     if (!headerRow.IsValid())
                     {
-                        System.Environment.Exit(3);
+                        throw new InvalidOperationException("CSV header row format is invalid.");
                     }
 
                     // Data Row Processing Loop
@@ -164,13 +165,24 @@ namespace CosmosGemlinBulkLoader
                         await LoadDatabase(elements);  // load the last batch
                     }
                 }
+                
                 long elapsedTime = EpochMsTime() - startTime;
+
                 Console.WriteLine($"finish timestamp: {CurrentTimestamp()}");
-                Console.WriteLine("Main completed in: {0} ms, rowCount: {1}", elapsedTime, rowCount);
+
+                string message = $"Main completed in: {elapsedTime} ms, rowCount: {rowCount}";
+
+                Console.WriteLine(message);
+
+                await WriteDoneBlobAsync(message);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"ERROR: Exception in Main() - ", e.Message);
+                string message = $"ERROR: Exception in Main() - {e.Message}";
+
+                await WriteErrorBlobAsync(message, e);
+
+                Console.WriteLine(message);
                 Console.WriteLine(e.StackTrace);
             }
             finally
@@ -224,7 +236,39 @@ namespace CosmosGemlinBulkLoader
                 return new StreamReader(infile);
             }
         }
-        
+
+        static async Task WriteDoneBlobAsync(string contents)
+        {
+            string doneBlobPath = config.GetStorageDoneBlobName();
+
+            if (!string.IsNullOrWhiteSpace(doneBlobPath))
+            {
+                await WriteFinalBlobAsync(doneBlobPath, contents); 
+            }
+        }
+
+        static async Task WriteErrorBlobAsync(string message, Exception ex)
+        {
+            string errorBlobPath = config.GetStorageErrorBlobName();
+
+            if (!string.IsNullOrWhiteSpace(errorBlobPath))
+            {
+                string contents = $"{message}{Environment.NewLine}{ex}";
+                await WriteFinalBlobAsync(errorBlobPath, contents);
+            }
+        }
+
+        static async Task WriteFinalBlobAsync(string path, string contents)
+        {
+            var blob = new BlobServiceClient(config.GetStorageConnString())
+                        .GetBlobContainerClient(config.GetStorageContainerName())
+                        .GetBlobClient(path);
+
+            using MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(contents));
+
+            await blob.UploadAsync(ms);
+        }
+
         static void ParseHeaderRow(string[] headerFields)
         {
             headerRow = new HeaderRow(
