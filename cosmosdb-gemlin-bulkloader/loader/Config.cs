@@ -30,6 +30,7 @@ namespace CosmosGemlinBulkLoader
         public const string CLI_FUNCTION_LOAD              = "load";
         public const string CSV_INFILE_KEYWORD             = "--csv-infile";
         public const string CSV_FIELD_SEPARATOR_KEYWORD    = "--csv-field-sep";
+        public const string NEWLINE_KEYWORD                = "--newline";
         public const string FILE_TYPE_KEYWORD              = "--file-type";      // vertex or edge
         public const string DATATYPE_SEPARATOR_KEYWORD     = "--datatype-sep";
         public const string ARRAY_SEPARATOR_KEYWORD        = "--array-sep";
@@ -235,6 +236,24 @@ namespace CosmosGemlinBulkLoader
         public string GetCsvInfile()
         {
             return GetCliKeywordArg(CSV_INFILE_KEYWORD);
+        }
+
+        public string GetNewLine()
+        {
+            string nl = GetCliKeywordArg(NEWLINE_KEYWORD);
+
+            if (string.IsNullOrWhiteSpace(nl))
+            {
+                return Environment.NewLine;
+            }
+            else if (string.Compare(nl, "unix", true) == 0)
+            {
+                return "\n";
+            }
+            else
+            {
+                return "\r\n";
+            }
         }
 
         public char GetCsvFieldSeparator()

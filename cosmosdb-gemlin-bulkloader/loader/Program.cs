@@ -102,7 +102,7 @@ namespace CosmosGemlinBulkLoader
                 
                 var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
-                    NewLine = Environment.NewLine,
+                    NewLine = config.GetNewLine(),
                     Delimiter = config.GetCsvFieldSeparator().ToString()
                 };
                 using (var csv = new CsvReader(GetSourceStreamReader(), csvConfig))
