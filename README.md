@@ -66,7 +66,7 @@ are for general parameters.
 
 #### Environment Variables
 
-Set the following three environment variables on your system.  The first three are 
+Set the following environment variables on your system.  The first three are 
 required, the fourth is needed only when reading CSV files from Azure Storage.
 
 ```
@@ -80,6 +80,9 @@ See your accounts in Azure Portal for the connection strings.
 
 Use the above database and graph names for AZURE_COSMOSDB_GRAPHDB_DBNAME and
 AZURE_COSMOSDB_GRAPHDB_GRAPH, respectively.
+
+For Windows users, see PowerShell script **cosmosdb-gemlin-bulkloader/loader/set_env.ps1**, 
+which can be used to set these environment variables.
 
 #### Command-Line and Scripts
 
